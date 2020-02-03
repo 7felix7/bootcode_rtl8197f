@@ -1,0 +1,319 @@
+
+# ATTENTION:
+# Brief explaination:
+#
+# 1. "make menuconfig" will see this file.
+# 2. make menuconfig save file will produce "/.config" and "/autoconf.h" two files.
+# 3. makefile will see the "/.config" file
+# 4. C code will see the "/autoconf.h"  
+#
+# in this file, declare variable xxx, please add the prefix "CONFIG_" word.  Example: "CONFIG_XXX"
+
+
+
+
+
+#===========================================================================
+mainmenu_name 'RTL Bootcode Configuration'
+mainmenu_option next_comment
+comment 'Target Platform Selection'
+comment 'Choose a Vendor/Product combination.'
+
+
+#===========================================================================
+# Different IC decalre in here.
+
+choice 'Product' "RTL8197F CONFIG_RTL8197F  \
+" RTL8197F
+
+
+#===========================================================================
+# Different IC want contain with the different config in here 
+#
+
+if [ "$CONFIG_RTL8197F" = "y" ] ; then
+		define_bool RTL8198 y
+		define_bool CONFIG_HISTORY_KEYIN
+		define_bool CONFIG_RTL8198 y
+fi
+
+#Test=====================================================================
+#bool "Use CPU DD2 set" CONFIG_SET
+#if [ "$CONFIG_SET" = "y" ]; then
+#choice 'DDR2 CLOCK ' "CPU_1G_DDR2_533MHz CONFIG_CPU_1G_DDR2_533M \
+#			CPU_800M_DDR2_400MHz CONFIG_CPU_800M_DDR2_400M \
+#			CPU_600M_DDR2_200MHz CONFIG_CPU_600M_DDR2_200M \
+#			" CPU_1G_DDR2_533MHz
+#if [ "$CONFIG_CPU_1G_DDR2_533M" = "y" ]; then
+#define_bool  CONFIG_CPU_1G y
+#define_bool  CONFIG_CPU_800M n
+#define_bool CONFIG_CPU_600M n
+#fi
+#if [ "$CONFIG_CPU_800M_DDR2_400M" = "y" ]; then
+#define_bool  CONFIG_CPU_1G n
+#define_bool  CONFIG_CPU_800M y
+#define_bool CONFIG_CPU_600M n
+#fi
+#if [ "$CONFIG_CPU_600M_DDR2_200M" = "y" ]; then
+#define_bool  CONFIG_CPU_1G n
+#define_bool  CONFIG_CPU_800M n
+#define_bool CONFIG_CPU_600M y
+#fi
+#fi
+
+
+#if [ "$CONFIG_CPU_DRAM" = "y"]; then
+#choice 'DDR2 CLOCK ' "CPU_1G_DDR2_533MHz CONFIG_CPU_1G_DDR2_533M \
+#                                CPU_800M_DDR2_400MHz CONFIG_CPU_800M_DDR2_400M \
+#                                CPU_600M_DDR2_200MHz CONFIG_CPU_600M_DDR2_200M \
+#                                "CPU_1G_DDR2_533MHz
+
+#if [ "$CONFIG_CPU_1G_DDR2_533M" = "y" ]; then
+#        define_bool  CONFIG_CPU_1G y
+#        define_bool  CONFIG_CPU_800M n
+#fi
+
+#if [ "$CONFIG_CPU_800M_DDR2_400M" = "y" ]; then
+#        define_bool  CONFIG_CPU_1G n
+#        define_bool  CONFIG_CPU_800M y
+#fi
+#int 'DRAM size (MB)' CONFIG_DRAM_SIZE_IN_MB_TEST 128
+#fi
+
+bool "Auto Discret DDR Switch" CONFIG_AUTO_DISCRET_DDR_SWITCH
+
+#=========================
+
+
+choice 'CPU CLOCK ' "CPU_800M  CONFIG_CPU_800M \
+				CPU_1G CONFIG_CPU_1G \
+#				CPU_600M CONFIG_CPU_600M \
+				" CPU_800M
+
+#===========================================================================
+bool "Config DRAM size (8197FB)" CONFIG_DRAM_SIZE
+if [ "$CONFIG_DRAM_SIZE" = "y" ]; then
+int 'DRAM size (MB)' CONFIG_DRAM_SIZE_IN_MB 128
+fi
+
+#===========================================================================
+# Common Config with every IC have this function in here. Don't litmit someone ic.
+#
+
+choice 'is FLASH Type ' "SPI_FLASH  CONFIG_SPI_FLASH \
+						 NONE_FLASH  CONFIG_NONE_FLASH \
+						NAND_FLASH_Booting  CONFIG_NAND_FLASH_BOOTING
+						" SPI_FLASH
+
+if [ "$CONFIG_SPI_FLASH" = "y" ]; then
+#choice 'is SPI IO Type'	"BOOT_SIO_8198_8196C CONFIG_BOOT_SIO_8198 \
+#					 BOOT_DIO_8198_8196C CONFIG_BOOT_DIO_8198 \
+#					 BOOT_QIO_8198_8196C CONFIG_BOOT_QIO_8198 \
+#				      " BOOT_SIO_8198_8196C
+#bool "SPI CLOCK LIMIT SPEED<40MHz" CONFIG_AUTO_PROBE_LIMITED_SPI_CLK_UNDER_40MHZ
+#bool "SPI FLASH SINGLE IO MODE(CAN ENABLE DHCP)" CONFIG_SPI_STD_MODE	
+#bool "SPI_3to4BYTES_ADDRESS_SUPPORT" CONFIG_SPI_3to4BYTES_ADDRESS_SUPPORT
+mainmenu_option next_comment
+	comment 'SPI Flash User Mode for sheipa'
+	bool 'Support Multi-channel write/read' CONFIG_M25PXX_USE_MULTI_CHANNEL
+	if [ "$CONFIG_M25PXX_USE_MULTI_CHANNEL" = "y" ]; then
+		bool 'Use DUAL OPCode allowing SPI do dual-channel write/read' CONFIG_M25PXX_USE_DUAL
+	fi
+	bool 'Use FAST_READ OPCode allowing SPI CLK >= 50MHz' CONFIG_M25PXX_USE_FAST_READ
+endmenu
+fi
+
+bool "NAND FLASH SUPPORT" CONFIG_NAND_FLASH
+
+if [ "$CONFIG_NAND_FLASH" = "y" ]; then
+choice 'NAND FLASH Type' "SPI_NAND CONFIG_SPI_NAND_FLASH \
+				PARALLEL_NAND CONFIG_PARALLEL_NAND_FLASH \
+			 "SPI_NAND
+
+bool 'Support Remap BBT' CONFIG_RTK_REMAP_BBT
+hex 'Nand Flash Page Size' CONFIG_MTD_NAND_RTK_PAGE_SIZE 0x800
+fi
+
+bool "TFTP SUPPORT COMMAND" CONFIG_TFTP_COMMAND
+
+if [ "$CONFIG_NAND_FLASH_BOOTING" = "n" ]; then
+	choice 'is SDRAM Type ' "NORMAL  CONFIG_SDRAM \
+							 DDR1 CONFIG_DDR1_SDRAM \
+							 DDR2/DDR3 CONFIG_DDR2_SDRAM \
+							 ROM_BOOT CONFIG_ROM_BOOT \
+							" CONFIG_DDR2_SDRAM
+
+	if [ "$CONFIG_DDR1_SDRAM" = "y" ] || [ "$CONFIG_DDR2_SDRAM" = "y" ]; then
+		define_bool CONFIG_DDR_SDRAM y
+	fi
+fi
+
+if  [ "$CONFIG_NAND_FLASH_BOOTING" = "y" ]; then
+choice 'IMAGE Type' "IRAM CONFIG_IRAM_IMAGE \
+			BOOT CONFIG_BOOT_IMAGE \
+			" BOOT
+
+if [ "$CONFIG_IRAM_IMAGE" = "y" ];then
+bool 'customer boot signature support' CONFIG_CUSTOMER_BOOT_SIGNATURE_SUPPORT
+if [ "$CONFIG_CUSTOMER_BOOT_SIGNATURE_SUPPORT" = "y" ];then
+string 'customer signature' CONFIG_CUSTOMER_BOOT_SIGNATURE "boot"
+fi
+hex 'nand flash page size' CONFIG_NAND_PAGE_SIZE  0x800
+
+
+
+#////////////////////NAND+DDR2 configuration////////////////////
+
+fi
+fi
+
+#CONFIG_NAND_FLASH_BOOTING end
+
+
+#choice 'is SWITCH Type ' "10M_100M  CONFIG_SW_100M \
+#						  P0_GMII  CONFIG_SW_P0_GMII \
+#						  P0_RGMII  CONFIG_SW_P0_RGMII \
+#						  NONE  CONFIG_SW_NONE \
+#						 " 10M_100M
+
+
+bool "Config Spi Flash Number" CONFIG_SPI_FLASH_NUMBER
+if [ "$CONFIG_SPI_FLASH_NUMBER" = "y" ]; then
+hex 'FLASH_NUMBER' CONFIG_FLASH_NUMBER 0x1
+fi
+
+bool "Support Flash Mapping Customize" CONFIG_RTL_FLASH_MAPPING_ENABLE
+if [ "$CONFIG_RTL_FLASH_MAPPING_ENABLE" = "y" ]; then
+hex 'LINUX image flash offset start' CONFIG_LINUX_IMAGE_OFFSET_START  0x10000
+hex 'LINUX image flash offset end'   CONFIG_LINUX_IMAGE_OFFSET_END    0x40000
+hex 'lINUX image check step'         CONFIG_LINUX_IMAGE_OFFSET_STEP   0x1000
+hex 'ROOT image flash offset start'  CONFIG_ROOT_IMAGE_OFFSET_START  0x100000
+hex 'ROOT image flash offset end'    CONFIG_ROOT_IMAGE_OFFSET_END    0x180000
+hex 'ROOT image check step'          CONFIG_ROOT_IMAGE_OFFSET_STEP   0x1000
+hex 'WEBPAGE image flash offset start'  CONFIG_WEBPAGE_IMAGE_OFFSET_START  0x10000
+hex 'WEBPAGE image flash offset end'    CONFIG_WEBPAGE_IMAGE_OFFSET_END    0x40000
+hex 'WEBPAGE image check step'          CONFIG_WEBPAGE_IMAGE_OFFSET_STEP   0x1000
+fi
+
+
+bool "Support Flash DualBank" CONFIG_RTL_FLASH_DUAL_IMAGE
+if [ "$CONFIG_RTL_FLASH_DUAL_IMAGE" = "y" ]; then
+choice 'Mode' "Static CONFIG_RTL_FLASH_DUAL_IMAGE_STATIC  \
+Toggle CONFIG_RTL_FLASH_DUAL_IMAGE_ENABLE
+" Static
+if [ "$CONFIG_RTL_FLASH_DUAL_IMAGE_ENABLE" = "y" ]; then
+bool 'Webpage Backup' CONFIG_WEBPAGE_BACKUP
+fi
+hex 'Second Bank offset' CONFIG_RTL_FLASH_DUAL_IMAGE_OFFSET  0x400000
+fi
+
+bool "Support Ecos 8MB Memory" CONFIG_RTL_ECOS_8M
+
+choice 'compress' "GZIP CONFIG_GZIP_ENABLE  \
+LZMA CONFIG_LZMA_ENABLE  \
+NONE CONFIG_NONO_COMPRESS  \
+" GZIP
+
+
+
+bool "Support DualImage(OpenWRT SDK)" CONFIG_RTK_BOOTINFO_DUALIMAGE
+if [ "$CONFIG_RTK_BOOTINFO_DUALIMAGE" = "y" ]; then
+hex 'Second Bank offset' CONFIG_RTK_DUALIMAGE_FLASH_OFFSET  0x400000
+fi
+
+bool 'Support DHCP Server'			CONFIG_DHCP_SERVER
+bool 'Support HTTP Update'			CONFIG_HTTP_SERVER
+#bool 'Power On Self Test Enable'		CONFIG_POST_ENABLE
+bool 'Boot Code Debug Command Enable'		CONFIG_BOOT_DEBUG_ENABLE
+bool 'Support reset botton feature'		CONFIG_BOOT_RESET_ENABLE
+
+#bool 'Update Default Vendor Settings'		CONFIG_DEFAULTS_VENDOR_UPDATE
+#bool 'Support History Keyin'		CONFIG_HISTORY_KEYIN
+
+#===========================================================================
+# Different IP module. If want to add test IP module, add in here. Can limmit some IC
+#
+
+#if [ "$CONFIG_NONE_FLASH" = "y" ]; then
+#bool 'Enable NFBI'	CONFIG_NFBI
+#fi
+
+ if [ "$CONFIG_NFBI" = "y" ]; then
+choice 'Switch Port5 Type is'		" NFBI_SWITCH_P5_MII_PHY_MODE	CONFIG_NFBI_SWITCH_P5_MII_PHY_MODE \
+							NFBI_SWITCH_P5_GMII_MAC_MODE	CONFIG_NFBI_SWITCH_P5_GMII_MAC_MODE \
+							" NFBI_SWITCH_P5_MII_PHY_MODE
+fi
+
+
+bool 'Enable JTAG Function for code debugging'	CONFIG_USING_JTAG
+#---------------------------------------------------------------------------
+
+#bool 'Enable FPGA_ROMCODE'	CONFIG_FPGA_ROMCODE
+
+#---------------------------------------------------------------------------
+
+#int 'Lxbus Hz'          CONFIG_LXBUS_HZ   25000000
+#int 'Lxbus Hz'          CONFIG_LXBUS_HZ   48000000
+#int 'Lxbus Hz'          CONFIG_LXBUS_HZ   200000000
+
+#bool 'Enable IIS Test'	CONFIG_IIS_TEST
+#bool 'Enable RLX5181 Test'	CONFIG_RLX5181_TEST
+
+#bool 'Enable NIC Loopback Feature'	CONFIG_NIC_LOOPBACK
+bool 'Support TFTP client'    CONFIG_SUPPORT_TFTP_CLIENT
+#bool 'Support new console'    CONFIG_NEW_CONSOLE_SUPPORT
+
+
+#===========================================================================
+#bool 'Enable 8198C HW Test'	CONFIG_8198C_HW_TEST				
+
+
+#---------------------------------------------------------------------------
+bool 'Enable DRAM Test'	CONFIG_DRAM_TEST					#2.For DRAM basic R/W test
+if [ "$CONFIG_DRAM_TEST" = "y" ]; then
+	define_bool  CONFIG_DRAM_BOOT_TEST y 
+fi
+
+#===========================================================================
+#bool 'DTR calculation'   CONFIG_DTR_CALCULATION
+ 
+#===========================================================================
+#bool 'RGB LED SUPPORT'   CONFIG_RGB_LED
+#bool 'ESD SUPPORT' CONFIG_ESD_SUPPORT
+bool 'PORT ISOLATION SUPPORT' CONFIG_PORT_ISOLATION_SUPPORT
+if [ "$CONFIG_PORT_ISOLATION_SUPPORT" = "y" ]; then
+choice 'ISOLATION TYPE ' "LAN_WAN  CONFIG_RTL_LAN_WAN_ISOLATION \
+                                                         ALL_PORT CONFIG_RTL_ALL_PORT_ISOLATION \
+                                                        " LAN_WAN
+fi
+
+bool 'Enable RTL8367RB support'	CONFIG_SW_8367R
+bool 'Enable RTL8366SC support'	CONFIG_SW_8366SC
+if [ "$CONFIG_SW_8366SC" = "y" ]; then
+	define_bool  CONFIG_SW_83XX y 
+fi
+
+bool 'Enable RTL8211F support'	CONFIG_8211F_SUPPORT
+
+bool 'Enable Param Passing support' CONFIG_PARAM_PASSING
+if [ "$CONFIG_PARAM_PASSING" = "y" ]; then
+hex 'Param Address' CONFIG_PARAM_PASSING_ADDR  0x81f00000
+string 'Cmdline' CONFIG_PARAM_CMDLINE "root=/dev/mtdblock1 console=ttyS0,38400"
+
+fi
+
+
+#bool 'for 8197F FPGA'	CONFIG_RTL_FPGA
+
+#===========================================================================
+#bool 'WatchDog_test'	CONFIG_WatchDog_test
+
+#===========================================================================
+
+#---------------------------------------------------------------------------
+#bool 'Enable PCIE Test'	CONFIG_PCIE_TEST					
+
+#===========================================================================
+
+#===========================================================================
+endmenu
